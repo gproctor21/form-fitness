@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
-  Activity,
   ArrowDownToLine,
   ArrowUpRight,
   Check,
@@ -20,6 +19,7 @@ import {
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { deriveKey, open, seal, type Journal, type Workout } from "./vault";
 import "./styles.css";
+import { createBackgroundLock } from "./background-lock";
 import { HealthPanel } from "./HealthPanel";
 import { CoachPanel } from "./CoachPanel";
 import { localDate, mergeHealthDays, type HealthImport } from "./health";
@@ -48,6 +48,7 @@ function App() {
     updateServiceWorker,
   } = useRegisterSW();
   const lock = () => {
+    afterUnlock.current = false;
     revision.current++;
     session.current = null;
     setJournal({ workouts: [] });
@@ -55,11 +56,18 @@ function App() {
     setModal(null);
   };
   useEffect(() => {
-    const hide = () => {
-      if (document.hidden) lock();
+    const guard = createBackgroundLock(lock);
+    const visibility = () => (document.hidden ? guard.hide() : guard.show());
+    document.addEventListener("visibilitychange", visibility);
+    window.addEventListener("pagehide", guard.hide);
+    window.addEventListener("pageshow", guard.show);
+    if (document.hidden) guard.hide();
+    return () => {
+      guard.dispose();
+      document.removeEventListener("visibilitychange", visibility);
+      window.removeEventListener("pagehide", guard.hide);
+      window.removeEventListener("pageshow", guard.show);
     };
-    document.addEventListener("visibilitychange", hide);
-    return () => document.removeEventListener("visibilitychange", hide);
   }, []);
   useEffect(() => {
     setError("");
@@ -302,15 +310,14 @@ function App() {
                   Log a workout <ArrowUpRight size={19} />
                 </button>
               </div>
-              <div className="orbit" aria-hidden="true">
-                <div className="orbit-inner">
-                  <Activity size={36} strokeWidth={1.3} />
-                  <span>
-                    ONE DAY
-                    <br />
-                    AT A TIME
-                  </span>
+              <div className="material-study" aria-hidden="true">
+                <div className="light-pane" />
+                <div className="tile-wall">
+                  {Array.from({ length: 12 }, (_, i) => (
+                    <span key={i} />
+                  ))}
                 </div>
+                <span className="material-caption">A DAILY PRACTICE</span>
               </div>
               <span className="hero-index">01 / THE FOUNDATION</span>
             </section>
@@ -521,9 +528,12 @@ function App() {
               backup.
             </p>
             <p>
-              The vault locks when you leave the app. Encryption protects saved
-              data; it does not protect an unlocked screen or a compromised
-              device.
+              You have two minutes to switch to Shortcuts or another app and
+              return without unlocking again. After two minutes away, the vault
+              locks. Lock journal still locks immediately. Reloading or iOS
+              closing the app also requires your passphrase. Encryption protects
+              saved data; it does not protect an unlocked screen or a
+              compromised device.
             </p>
             <div className="settings-actions">
               <button

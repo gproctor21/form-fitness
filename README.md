@@ -26,7 +26,7 @@ This workflow requires GitHub Pages to be enabled and permitted by repository/ac
 
 ## Local vault and backup
 
-Create a passphrase of at least 12 characters before logging a workout. The vault uses Web Crypto AES-256-GCM, a fresh random 96-bit IV on every save, and a PBKDF2-SHA-256 key derived with 600,000 iterations and a random 128-bit salt. Only ciphertext, IV, salt, and format version are saved in localStorage; the key and decrypted journal stay in memory. The journal locks when the document becomes hidden. This can include opening the iOS share sheet, so unlock again if needed.
+Create a passphrase of at least 12 characters before logging a workout. The vault uses Web Crypto AES-256-GCM, a fresh random 96-bit IV on every save, and a PBKDF2-SHA-256 key derived with 600,000 iterations and a random 128-bit salt. Only ciphertext, IV, salt, and format version are saved in localStorage; the key and decrypted journal stay in memory. The journal stays unlocked for up to two minutes while the app is in the background, so you can briefly switch to Shortcuts or Files. It locks after that interval, including when iOS suspends timers and you return later. Manual locking is immediate. Keys remain only in memory: reloading or iOS discarding the app still requires the passphrase. Returning within the grace period preserves in-progress forms and imports.
 
 Export the encrypted backup in Settings and keep it in Files. To restore, open Settings in a fresh installation/origin without an existing vault, select the JSON backup, and unlock with its original passphrase. There is no account, sync, passphrase recovery, or automatic backup. Browser data removal, device loss, or storage eviction can erase the local journal. Encryption at rest does not protect an unlocked session or a compromised device. This is a local foundation, not a clinically validated health storage system.
 
@@ -51,3 +51,7 @@ Existing workout-only vaults open without migration. New Health fields are inclu
 Per the user's choice, the Chat tab opens the existing Health & Fitness ChatGPT project, rather than embedding an API chat. The destination was verified in the signed-in browser. It displays no private context in the public code; the project ID is a destination identifier, not an access credential. Normal ChatGPT sign-in still applies. FORM has no access to project memory or conversations. Unlock the vault to review and manually copy the latest seven imported daily summaries and ten workouts. Nothing is transmitted to ChatGPT until the user chooses to paste it there. No API billing, server, or API key was added.
 
 Tests additionally cover malformed/invalid dates and units, duplicate rejection, replacement without double counting, encrypted Health round-trip, and compatibility with old workout-only vaults.
+
+## Visual direction
+
+Warm limestone and concrete tones, sage ceramic tile geometry, soft glass panels, and charcoal framing inspired by the user-provided Mexico City bathroom reference. All surfaces, dialogs, navigation, the offline guide, and PWA chrome use the light palette. The private reference photo is not bundled or published.
