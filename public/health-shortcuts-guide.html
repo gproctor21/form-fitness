@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>FORM · Apple Health Shortcuts setup</title>
+    <style>
+      body {
+        background: #101715;
+        color: #e8efdf;
+        font:
+          16px/1.7 -apple-system,
+          BlinkMacSystemFont,
+          sans-serif;
+        max-width: 760px;
+        margin: auto;
+        padding: 32px 22px;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      h1 {
+        font-size: 36px;
+      }
+      h2 {
+        margin-top: 36px;
+        font-size: 23px;
+      }
+      p,
+      li {
+        color: #b9c7b1;
+      }
+      li {
+        margin-bottom: 14px;
+      }
+      a,
+      code,
+      strong {
+        color: #d5e9ad;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      td,
+      th {
+        border-bottom: 1px solid #394633;
+        padding: 12px 4px;
+        text-align: left;
+      }
+      pre {
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        background: #1d291f;
+        padding: 20px;
+        border-radius: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <a href="./">← FORM</a>
+    <h1>Apple Health → FORM</h1>
+    <p>
+      Use an iPhone Shortcut to export daily summaries to Files. Import that
+      file into FORM. This requires your Health read permission on the iPhone.
+      FORM itself has no direct HealthKit permission and no continuous
+      background sync.
+    </p>
+    <h2>Start with one day of steps</h2>
+    <ol>
+      <li>In Shortcuts, create <strong>Export to FORM</strong>.</li>
+      <li>
+        Add <strong>Find Health Samples</strong>. Select <strong>Steps</strong>.
+        Restrict the Start Date to one calendar day using its start and end
+        boundaries. Select one <strong>Source</strong>, such as your Apple
+        Watch. Grant Health read access when prompted. Start with yesterday so
+        the day is complete.
+      </li>
+      <li>
+        Add <strong>Count</strong> for the results. If the count is zero, stop
+        the shortcut. No returned samples can mean no data or no permission;
+        never turn that into a zero reading.
+      </li>
+      <li>
+        Add <strong>Calculate Statistics</strong>, choose <strong>Sum</strong>,
+        and explicitly select the Health Samples as input (not the Count).
+      </li>
+      <li>
+        Use <strong>Format Date</strong> with Custom format
+        <code>yyyy-MM-dd</code> for the selected calendar day. Use lowercase
+        <code>yyyy</code>; the date must match your query window. Use that day,
+        not the current date for a historical query.
+      </li>
+      <li>
+        Add a <strong>Dictionary</strong>. Add Text <code>date</code> =
+        Formatted Date, Text <code>source</code> = the selected source name, and
+        Number <code>steps</code> = the Statistics result. Choose the result as
+        a variable, not literal text.
+      </li>
+      <li>
+        Add a <strong>List</strong> containing that Dictionary. Add a second
+        <strong>Dictionary</strong> with Number <code>version</code> = 1 and
+        Array <code>days</code> = the List.
+      </li>
+      <li>
+        Add <strong>Get Text from Input</strong> with the second Dictionary as
+        input, <strong>Set Name</strong> to <code>form-health.json</code>, then
+        <strong>Save File</strong>. Choose a location in Files.
+      </li>
+      <li>
+        Run the shortcut, then open FORM → Health. Unlock or create your vault,
+        choose <code>form-health.json</code>, review the readings and source,
+        then save. Back up your encrypted vault in Settings.
+      </li>
+    </ol>
+    <p>
+      Action wording can vary with iOS. The Shortcut is created on your iPhone;
+      this guide does not install or authorize it. Test the first output and
+      compare with that source’s samples before using it regularly. Phone and
+      Watch samples can overlap; summing all sources can overcount. A
+      single-source import is not guaranteed to match Health’s combined daily
+      total.
+    </p>
+    <h2>Expected file shape</h2>
+    <p>
+      This describes the structure. Replace the placeholders with the Shortcut’s
+      date, selected source, and numeric Sum; do not import this illustration as
+      data.
+    </p>
+    <pre>
+{
+  "version": 1,
+  "days": [
+    {
+      "date": "YYYY-MM-DD",
+      "source": "YOUR SELECTED SOURCE",
+      "steps": STEPS_SUM
+    }
+  ]
+}</pre>
+    <h2>Optional daily fields</h2>
+    <p>
+      The first Shortcut only exports steps. Other fields are accepted when
+      explicitly supplied in the units below. Omit absent or permission-denied
+      readings. Do not use zero as a substitute. Keep one summary per date. If
+      different fields use different sources, include that mapping in the source
+      label.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th>Field</th>
+          <th>Unit / meaning</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><code>steps</code></td>
+          <td>Integer count for the queried day and selected source</td>
+        </tr>
+        <tr>
+          <td><code>activeEnergyKcal</code></td>
+          <td>Active energy, kcal; not basal energy or food intake</td>
+        </tr>
+        <tr>
+          <td><code>restingHeartRateBpm</code></td>
+          <td>Resting heart rate, beats/minute; not general heart rate</td>
+        </tr>
+        <tr>
+          <td><code>sleepHours</code></td>
+          <td>
+            Hours asleep; exclude awake/in-bed time and overlapping stages
+          </td>
+        </tr>
+        <tr>
+          <td><code>dietaryEnergyKcal</code></td>
+          <td>Food energy logged, kcal; not calories burned</td>
+        </tr>
+        <tr>
+          <td><code>weightKg</code></td>
+          <td>Latest weight for that date, kilograms; not a sum</td>
+        </tr>
+      </tbody>
+    </table>
+    <p>
+      FORM accepts up to 366 dates per import and files smaller than 1 MB.
+      Importing a date again replaces its entire previous summary rather than
+      adding totals. Include all fields you want to retain for that date. The
+      dashboard shows today's imported readings only; older days stay in Health
+      history with their source and import timestamp. Import timestamps indicate
+      when FORM saved the file, not when the Health readings were collected.
+    </p>
+    <h2>Chat stays in your project</h2>
+    <p>
+      FORM's Chat tab opens your existing Health &amp; Fitness project in
+      ChatGPT. Unlock the vault to review and copy a summary first. Pasting into
+      ChatGPT is your choice; FORM does not send readings or synchronize project
+      chats.
+    </p>
+    <h2>Privacy</h2>
+    <p>
+      The export file is plaintext Health data in Files. Store it privately.
+      FORM encrypts its saved copy in your local vault. No raw exports are
+      uploaded to GitHub, and no API key is needed. Use encrypted backups
+      because clearing website data can erase the vault.
+    </p>
+    <p>
+      <a
+        href="https://support.apple.com/guide/shortcuts/intro-to-find-and-filter-actions-apd3c845e881/ios"
+        >Apple: Find and Filter actions</a
+      >
+    </p>
+  </body>
+</html>

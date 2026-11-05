@@ -10,6 +10,7 @@ import {
   Footprints,
   Heart,
   House,
+  MessageCircle,
   LockKeyhole,
   Plus,
   Settings,
@@ -19,11 +20,11 @@ import {
 import { useRegisterSW } from "virtual:pwa-register/react";
 import { deriveKey, open, seal, type Journal, type Workout } from "./vault";
 import "./styles.css";
+import { HealthPanel } from "./HealthPanel";
+import { CoachPanel } from "./CoachPanel";
+import { localDate, mergeHealthDays, type HealthImport } from "./health";
 const STORAGE = "form.vault.v1";
-const today = () => {
-  const d = new Date();
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-};
+const today = localDate;
 function App() {
   const [tab, setTab] = useState("Today");
   const [journal, setJournal] = useState<Journal>({ workouts: [] });
@@ -39,12 +40,15 @@ function App() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const session = useRef<{ key: CryptoKey; salt: Uint8Array } | null>(null);
+  const afterUnlock = useRef(false);
+  const revision = useRef(0);
   const dialog = useRef<HTMLDialogElement>(null);
   const {
     needRefresh: [refresh],
     updateServiceWorker,
   } = useRegisterSW();
   const lock = () => {
+    revision.current++;
     session.current = null;
     setJournal({ workouts: [] });
     setUnlocked(false);
@@ -68,10 +72,12 @@ function App() {
     setError("");
     const data = new FormData(event.currentTarget);
     const pass = String(data.get("passphrase"));
+    const attempt = revision.current;
     try {
       const stored = localStorage.getItem(STORAGE);
       if (stored) {
         const result = await open(JSON.parse(stored), pass);
+        if (attempt !== revision.current || document.hidden) return;
         session.current = result;
         setJournal(result.journal);
       } else {
@@ -84,11 +90,13 @@ function App() {
           STORAGE,
           JSON.stringify(await seal({ workouts: [] }, key, salt)),
         );
+        if (attempt !== revision.current || document.hidden) return;
         session.current = { key, salt };
         setHasVault(true);
       }
       setUnlocked(true);
-      setModal("workout");
+      setModal(afterUnlock.current ? "workout" : null);
+      afterUnlock.current = false;
     } catch {
       setError(
         "Could not open or save the vault. Check your passphrase, confirmation, and available storage. New passphrases need 12 characters.",
@@ -121,15 +129,9 @@ function App() {
       setBusy(false);
       return;
     }
-    const next = { workouts: [workout, ...journal.workouts] };
+    const next = { ...journal, workouts: [workout, ...journal.workouts] };
     try {
-      localStorage.setItem(
-        STORAGE,
-        JSON.stringify(
-          await seal(next, session.current.key, session.current.salt),
-        ),
-      );
-      setJournal(next);
+      await persist(next);
       setModal(null);
       setTab("Training");
     } catch {
@@ -138,7 +140,34 @@ function App() {
       setBusy(false);
     }
   }
-  const log = () => setModal(unlocked ? "workout" : "vault");
+  const log = () => {
+    afterUnlock.current = true;
+    setModal(unlocked ? "workout" : "vault");
+  };
+  async function persist(next: Journal) {
+    const active = session.current;
+    const attempt = revision.current;
+    if (!active) throw new Error("Unlock your vault first.");
+    const encrypted = await seal(next, active.key, active.salt);
+    if (attempt !== revision.current || session.current !== active)
+      throw new Error("Vault locked.");
+    localStorage.setItem(STORAGE, JSON.stringify(encrypted));
+    setJournal(next);
+  }
+  async function saveHealth(data: HealthImport) {
+    if (busy) throw new Error("A save is already in progress.");
+    setBusy(true);
+    try {
+      await persist({
+        ...journal,
+        healthDays: mergeHealthDays(journal.healthDays ?? [], data),
+      });
+    } finally {
+      setBusy(false);
+    }
+  }
+  const dailyHealth = journal.healthDays?.find((day) => day.date === today());
+  const latestHealth = journal.healthDays?.[0];
   const completed = journal.workouts.filter((w) => w.date === today());
   const minutes = completed.reduce((sum, w) => sum + w.minutes, 0);
   function backup() {
@@ -224,7 +253,11 @@ function App() {
                 ? "Find your form."
                 : tab === "Training"
                   ? "Make it count."
-                  : "Your space."}
+                  : tab === "Health"
+                    ? "Know your rhythm."
+                    : tab === "Chat"
+                      ? "Keep the conversation going."
+                      : "Your space."}
             </h1>
             <p>
               {tab === "Today"
@@ -298,24 +331,34 @@ function App() {
                 },
                 {
                   label: "Daily movement",
-                  value: "—",
+                  value: dailyHealth?.steps?.toLocaleString() ?? "—",
                   unit: "steps",
                   icon: Footprints,
-                  note: "Apple Health not connected",
+                  note:
+                    dailyHealth?.steps !== undefined
+                      ? "Imported · " + dailyHealth.source
+                      : "No steps imported for today",
                 },
                 {
-                  label: "Recovery",
-                  value: "—",
-                  unit: "",
+                  label: "Sleep",
+                  value: dailyHealth?.sleepHours?.toLocaleString() ?? "—",
+                  unit: "hours",
                   icon: Heart,
-                  note: "No recovery data yet",
+                  note:
+                    dailyHealth?.sleepHours !== undefined
+                      ? "Imported · " + dailyHealth.date
+                      : "No sleep imported for today",
                 },
                 {
                   label: "Nutrition",
-                  value: "—",
+                  value:
+                    dailyHealth?.dietaryEnergyKcal?.toLocaleString() ?? "—",
                   unit: "kcal",
                   icon: Flame,
-                  note: "No nutrition data yet",
+                  note:
+                    dailyHealth?.dietaryEnergyKcal !== undefined
+                      ? "Imported dietary energy"
+                      : "No nutrition imported for today",
                 },
               ].map((m) => (
                 <article className="metric" key={m.label}>
@@ -357,10 +400,19 @@ function App() {
                 </div>
                 <h3>Your health. One clear view.</h3>
                 <p>
-                  Apple Health via Shortcuts is coming later. For now, start
-                  with your own workout entries.
+                  {latestHealth
+                    ? `Latest import: ${latestHealth.date} from ${latestHealth.source}.`
+                    : "Bring in Apple Health readings with an iPhone Shortcut. Review each import before saving."}
                 </p>
-                <span className="pill">NOT CONNECTED</span>
+                <span className="pill">
+                  {latestHealth ? "MANUAL IMPORT" : "SHORTCUTS BRIDGE"}
+                </span>
+                <button
+                  className="text-button"
+                  onClick={() => setTab("Health")}
+                >
+                  Import Health data <ArrowUpRight size={16} />
+                </button>
                 <div className="privacy-line">
                   <ShieldCheck size={16} /> No health data leaves this app.
                 </div>
@@ -424,6 +476,40 @@ function App() {
             )}
           </section>
         )}
+        {tab === "Health" &&
+          (unlocked ? (
+            <HealthPanel
+              days={journal.healthDays ?? []}
+              onSave={saveHealth}
+              busy={busy}
+            />
+          ) : (
+            <section className="panel">
+              <Heart size={28} />
+              <h2>Apple Health via Shortcuts.</h2>
+              <p>
+                Unlock your vault to import and review Health summaries from
+                your iPhone. FORM cannot request HealthKit access from a
+                website.
+              </p>
+              <button
+                className="primary"
+                onClick={() => {
+                  afterUnlock.current = false;
+                  setModal("vault");
+                }}
+              >
+                {hasVault ? "Unlock vault" : "Create vault"}
+              </button>
+            </section>
+          ))}
+        {tab === "Chat" && (
+          <CoachPanel
+            days={journal.healthDays ?? []}
+            workouts={journal.workouts}
+            unlocked={unlocked}
+          />
+        )}
         {tab === "Settings" && (
           <section className="panel settings">
             <ShieldCheck size={30} />
@@ -474,8 +560,9 @@ function App() {
             </p>
             <h3>Apple Health</h3>
             <p>
-              Not connected. A future Shortcuts integration will require
-              explicit permission and validation of imported data.
+              Use the Health tab to import a daily summary saved by an iPhone
+              Shortcut. There is no background sync or direct website access to
+              HealthKit.
             </p>
           </section>
         )}
@@ -489,6 +576,8 @@ function App() {
         {[
           { name: "Today", icon: House },
           { name: "Training", icon: Dumbbell },
+          { name: "Health", icon: Heart },
+          { name: "Chat", icon: MessageCircle },
           { name: "Settings", icon: Settings },
         ].map((item) => (
           <button
