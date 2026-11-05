@@ -705,3 +705,132 @@ body:has(dialog[open]) {
     }
   }
 }
+textarea {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid #4a5845;
+  border-radius: 12px;
+  background: #111c15;
+  color: #eef2e8;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  margin-top: 8px;
+  resize: vertical;
+}
+textarea:focus-visible {
+  outline: 2px solid #d7edab;
+  outline-offset: 3px;
+}
+.button-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  margin: 22px 0 0;
+  min-height: 44px;
+}
+.health-panel,
+.coach-panel {
+  max-width: 800px;
+}
+.health-panel > svg,
+.coach-panel > svg {
+  color: #c8dda6;
+}
+.health-panel p,
+.coach-panel p {
+  margin: 14px 0;
+}
+.coach-panel > .eyebrow {
+  display: block;
+  margin: 20px 0;
+}
+.setup-guide {
+  margin-top: 22px;
+}
+details {
+  margin: 20px 0;
+  border: 1px solid #354437;
+  padding: 16px;
+  border-radius: 12px;
+}
+summary {
+  cursor: pointer;
+  min-height: 36px;
+  font-size: 14px;
+  color: #d5e9ad;
+}
+details ol {
+  padding-left: 20px;
+  margin-bottom: 0;
+}
+details li {
+  font-size: 13px;
+  line-height: 1.8;
+  color: #b5c2b1;
+  margin-bottom: 14px;
+}
+details a {
+  color: #d5e9ad;
+  text-decoration: underline;
+}
+code {
+  color: #d5e9ad;
+  overflow-wrap: anywhere;
+}
+.health-day {
+  padding: 16px 0;
+  border-top: 1px solid #354437;
+}
+.health-day p {
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.health-day dl {
+  margin: 12px 0;
+}
+.health-day dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  padding: 8px 0;
+  color: #bfceb7;
+}
+.health-day dd {
+  margin: 0;
+  text-align: right;
+}
+.import-review {
+  margin: 20px 0;
+}
+.connection .text-button {
+  display: flex;
+}
+.health-panel > .primary {
+  margin-top: 20px;
+}
+@media (max-width: 700px) {
+  nav {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+  nav button {
+    padding: 8px 5px;
+    min-width: 0;
+    flex: 1;
+  }
+  .health-panel,
+  .coach-panel {
+    padding: 22px 18px;
+  }
+  .health-day dl > div {
+    font-size: 12px;
+  }
+  textarea {
+    font-size: 16px;
+  }
+}

@@ -1,3 +1,4 @@
+import { parseHealthImport, type SavedHealthDay } from "./health.ts";
 export type Workout = {
   id: string;
   date: string;
@@ -5,14 +6,19 @@ export type Workout = {
   minutes: number;
   kind: "Strength" | "Run" | "Mobility" | "Other";
 };
-export type Journal = { workouts: Workout[] };
+export type Journal = { workouts: Workout[]; healthDays?: SavedHealthDay[] };
 export type Envelope = {
   version: 1;
   salt: string;
   iv: string;
   ciphertext: string;
 };
-const encode = (data: Uint8Array) => btoa(String.fromCharCode(...data));
+const encode = (data: Uint8Array) => {
+  let binary = "";
+  for (let offset = 0; offset < data.length; offset += 8192)
+    binary += String.fromCharCode(...data.subarray(offset, offset + 8192));
+  return btoa(binary);
+};
 const decode = (data: string) =>
   Uint8Array.from(atob(data), (c) => c.charCodeAt(0));
 export async function deriveKey(passphrase: string, salt: Uint8Array) {
@@ -72,5 +78,23 @@ export async function open(envelope: Envelope, passphrase: string) {
     )
   )
     throw new Error("Invalid vault");
+  if (journal.healthDays !== undefined) {
+    if (!Array.isArray(journal.healthDays) || journal.healthDays.length > 10000)
+      throw new Error("Invalid Health history");
+    journal.healthDays = journal.healthDays.map((day) => {
+      if (
+        !day ||
+        typeof day.importedAt !== "string" ||
+        !Number.isFinite(Date.parse(day.importedAt))
+      )
+        throw new Error("Invalid import timestamp");
+      const { importedAt, ...values } = day;
+      return {
+        ...parseHealthImport(JSON.stringify({ version: 1, days: [values] }))
+          .days[0],
+        importedAt,
+      };
+    });
+  }
   return { key, salt, journal };
 }
