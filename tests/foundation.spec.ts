@@ -12,7 +12,7 @@ test("iPhone journal, encryption, backup, restore and offline shell", async ({
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("http://localhost:4173/form-fitness/");
   await expect(
-    page.getByRole("heading", { name: "Find your form." }),
+    page.getByRole("heading", { name: "Today." }),
   ).toBeVisible();
   expect(
     await page.evaluate(
@@ -79,7 +79,7 @@ test("iPhone journal, encryption, backup, restore and offline shell", async ({
   await context.setOffline(true);
   await page.reload();
   await expect(
-    page.getByRole("heading", { name: "Find your form." }),
+    page.getByRole("heading", { name: "Today." }),
   ).toBeVisible();
   await context.setOffline(false);
   // Restore into a fresh storage origin after explicitly removing the test vault.

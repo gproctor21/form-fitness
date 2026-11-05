@@ -54,4 +54,4 @@ Tests additionally cover malformed/invalid dates and units, duplicate rejection,
 
 ## Visual direction
 
-Warm limestone and concrete tones, sage ceramic tile geometry, soft glass panels, and charcoal framing inspired by the user-provided Mexico City bathroom reference. All surfaces, dialogs, navigation, the offline guide, and PWA chrome use the light palette. The private reference photo is not bundled or published.
+A minimal, numeric dashboard based on the user's two newer interface references: oversized sans-serif training time, compact monospaced labels, hairline dividers, an atmospheric sage/lavender/stone gradient, and black pill navigation. No simulated progress graphics or sample live readings are shown. Earlier literal bathroom/window/tile illustrations have been removed. Reference photographs are not bundled or published. The two-minute vault grace period is unchanged.
