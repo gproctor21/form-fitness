@@ -258,18 +258,18 @@ function App() {
           <div>
             <h1>
               {tab === "Today"
-                ? "Find your form."
+                ? "Today."
                 : tab === "Training"
-                  ? "Make it count."
+                  ? "Training."
                   : tab === "Health"
-                    ? "Know your rhythm."
+                    ? "Health."
                     : tab === "Chat"
-                      ? "Keep the conversation going."
-                      : "Your space."}
+                      ? "Your coach."
+                      : "Settings."}
             </h1>
             <p>
               {tab === "Today"
-                ? "A little intention. A stronger everyday."
+                ? "A little movement. A little consistency."
                 : tab === "Training"
                   ? "Your work, recorded on your terms."
                   : "Private by design. Yours to control."}
@@ -289,55 +289,42 @@ function App() {
         )}
         {tab === "Today" && (
           <>
-            <section className="hero">
-              <div className="hero-copy">
-                <div className="eyebrow">
-                  <span className="live-dot" /> YOUR NEXT CHAPTER
+            <section className="hero" aria-label="Today's training">
+              <div className="hero-atmosphere" aria-hidden="true">
+                <span />
+                <span />
+                <span />
+              </div>
+              <div className="hero-data">
+                <div>
+                  <span className="eyebrow">TRAINING / TODAY</span>
+                  <div className="hero-number">
+                    {unlocked ? minutes : "—"}
+                    <small>min</small>
+                  </div>
+                  <p>
+                    {unlocked
+                      ? `${completed.length} sessions logged`
+                      : "Unlock to view your journal"}
+                  </p>
                 </div>
-                <h2>
-                  Progress starts
-                  <br />
-                  with showing up.
-                </h2>
-                <p>
-                  {journal.workouts.length
-                    ? "Keep building on the work you’ve done."
-                    : "Your first session is a fresh start."}
-                  <br />
-                  Build a rhythm that feels like you.
-                </p>
-                <button className="primary" onClick={log}>
-                  Log a workout <ArrowUpRight size={19} />
+                <button
+                  className="round-log"
+                  onClick={log}
+                  aria-label="Log a workout"
+                >
+                  <Plus size={25} strokeWidth={1.4} />
                 </button>
               </div>
-              <div className="material-study" aria-hidden="true">
-                <div className="light-pane" />
-                <div className="tile-wall">
-                  {Array.from({ length: 12 }, (_, i) => (
-                    <span key={i} />
-                  ))}
-                </div>
-                <span className="material-caption">A DAILY PRACTICE</span>
-              </div>
-              <span className="hero-index">01 / THE FOUNDATION</span>
             </section>
             <div className="section-title">
-              <h2>Today, at a glance</h2>
+              <h2>Daily readings</h2>
               <span>{unlocked ? "YOUR ENTRIES" : "AWAITING YOUR DATA"}</span>
             </div>
             <section className="metrics" aria-label="Daily metrics">
               {[
                 {
-                  label: "Training",
-                  value: unlocked ? String(minutes) : "—",
-                  unit: "min",
-                  icon: Dumbbell,
-                  note: unlocked
-                    ? `${completed.length} sessions logged`
-                    : "Unlock to see your sessions",
-                },
-                {
-                  label: "Daily movement",
+                  label: "Steps",
                   value: dailyHealth?.steps?.toLocaleString() ?? "—",
                   unit: "steps",
                   icon: Footprints,
@@ -355,6 +342,16 @@ function App() {
                     dailyHealth?.sleepHours !== undefined
                       ? "Imported · " + dailyHealth.date
                       : "No sleep imported for today",
+                },
+                {
+                  label: "Active energy",
+                  value: dailyHealth?.activeEnergyKcal?.toLocaleString() ?? "—",
+                  unit: "kcal",
+                  icon: Flame,
+                  note:
+                    dailyHealth?.activeEnergyKcal !== undefined
+                      ? "Imported active energy"
+                      : "No energy imported for today",
                 },
                 {
                   label: "Nutrition",
@@ -384,28 +381,26 @@ function App() {
             <section className="lower-grid">
               <article className="panel">
                 <div className="section-title">
-                  <h2>Your training</h2>
+                  <h2>Journal</h2>
                   <Dumbbell size={19} />
                 </div>
                 <div className="empty-icon">
                   <Plus size={25} />
                 </div>
-                <h3>Room for your next win.</h3>
+                <h3>Log a session</h3>
                 <p>
-                  Strength, a run, or a moment to move.
-                  <br />
-                  Every session belongs here.
+                  Strength, running, mobility. Keep a record of what you do.
                 </p>
                 <button className="text-button" onClick={log}>
                   Add a session <ArrowUpRight size={16} />
                 </button>
               </article>
               <article className="panel connection">
-                <span className="eyebrow">BUILT AROUND YOU</span>
+                <span className="eyebrow">YOUR DATA</span>
                 <div className="connection-icon">
                   <Heart size={26} />
                 </div>
-                <h3>Your health. One clear view.</h3>
+                <h3>Apple Health</h3>
                 <p>
                   {latestHealth
                     ? `Latest import: ${latestHealth.date} from ${latestHealth.source}.`
@@ -578,7 +573,7 @@ function App() {
         )}
         <footer>
           <span className="wordmark small">FORM.</span>
-          <span>CONSISTENCY OVER PERFECTION.</span>
+          <span>PRIVATE / DEVICE LOCAL</span>
           <ShieldCheck size={15} />
         </footer>
       </main>
